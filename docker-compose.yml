@@ -1,0 +1,36 @@
+version: '3.1'
+services:
+        spark-master:
+                hostname: spark-master
+                image: spark-master
+                ports:
+                        - 8080:8080 # Spark Master UI
+                        - 7077:7077 # Spark shell/submit
+                        - 6066:6066 # Spark REST
+                networks:
+                        - cassandra-spark
+        cassandra-1:
+                hostname: cassandra-1
+                image: cassandra-spark-worker
+                ports:
+                        - 8081:8081 # Spark Worker UI
+                        - 9042:9042 # Cassandra cqlsh
+                environment:
+                        - SPARK_MASTER_HOST=spark-master
+                        - SPARK_MASTER_PORT=7077 
+                networks:
+                        - cassandra-spark
+        cassandra-2:
+                hostname: cassandra-2
+                image: cassandra-spark-worker
+                ports:
+                        - 8082:8081 # Spark Worker UI
+                environment:
+                        - SPARK_MASTER_HOST=spark-master
+                        - SPARK_MASTER_PORT=7077
+                        - CASSANDRA_SEEDS=cassandra-1
+                networks:
+                        - cassandra-spark
+networks:
+        cassandra-spark:
+                driver: bridge
