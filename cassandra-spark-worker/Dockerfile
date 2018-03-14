@@ -26,13 +26,26 @@ ENV CASSANDRA_SEEDS auto
 
 RUN groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra
 
-RUN apt-get install -y curl > /dev/null 2>&1
+RUN apt-get install -y --no-install-recommends curl \
+	libjemalloc1 \
+	procps \
+	iproute2 \
+    ; \
+    if ! command -v gpg > /dev/null; then \
+		apt-get install -y --no-install-recommends \
+			dirmngr \
+			gnupg \
+		; \
+	fi 
+	
 RUN echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list \
 	&& curl https://www.apache.org/dist/cassandra/KEYS | apt-key add - \
 	&& apt-get update > /dev/null 2>&1\
 	&& apt-key adv --keyserver pool.sks-keyservers.net --recv-key A278B781FE4B2BDA \
 	&& apt-get update > /dev/null 2>&1 \
 	&& apt-get install -y cassandra > /dev/null 2>&1
+
+RUN sed -ri 's/^(JVM_PATCH_VERSION)=.*/\1=25/' "/etc/cassandra/cassandra-env.sh"
 
 RUN chown -R cassandra:cassandra /etc/cassandra
 
